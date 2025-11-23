@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+httpx
+pydantic
+SQLAlchemy
+aiosqlite
+python-dotenv
+tenacity
+amadeus
+mcp

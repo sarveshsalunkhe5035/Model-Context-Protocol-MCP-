@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Smart Trip Planner</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Use Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom spinner */
+        .spinner {
+            border-color: #fff;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 md:p-12">
+        <!-- Header Section -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-indigo-600 mb-2">
+                🏝️ Smart Trip Planner
+            </h1>
+            <p class="text-gray-600 text-lg">
+                Describe your perfect trip and our AI will build it for you.
+            </p>
+        </header>
+
+        <!-- Main Form -->
+        <main>
+            <form id="trip-form">
+                <div class="mb-6">
+                    <label for="query-input" class="block text-sm font-medium text-gray-700 mb-2">Your travel request:</label>
+                    <textarea id="query-input" rows="5" class="w-full p-4 text-gray-700 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" placeholder="e.g., A 5-day luxury trip to Goa for 2 people, focusing on beaches and fine dining." required></textarea>
+                </div>
+                
+                <button type="submit" id="submit-btn" class="w-full bg-indigo-600 text-white text-lg font-semibold p-4 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 flex items-center justify-center space-x-2 disabled:bg-indigo-300">
+                    <span id="btn-text">Plan My Trip</span>
+                    <!-- Spinner (hidden by default) -->
+                    <div id="loader" class="hidden spinner w-5 h-5 border-2 rounded-full"></div>
+                </button>
+            </form>
+
+            <!-- Error Message Area -->
+            <div id="error-message" class="hidden mt-6 p-4 bg-red-100 text-red-700 border border-red-200 rounded-lg">
+                <!-- Error content will be injected here -->
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tripForm = document.getElementById('trip-form');
+            const queryInput = document.getElementById('query-input');
+            const submitBtn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+            const loader = document.getElementById('loader');
+            const errorMessage = document.getElementById('error-message');
+
+            // This is the URL for your main backend server
+            const API_URL = 'http://localhost:8000/api/query';
+
+            tripForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const query = queryInput.value.trim();
+                if (!query) return;
+
+                // --- UI State: Loading ---
+                submitBtn.disabled = true;
+                btnText.classList.add('hidden');
+                loader.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            query: query,
+                            user_id: 'web-user-' + Date.now() // Simple unique user ID
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        // Handle errors from the server (e.g., 500)
+                        throw new Error(data.detail || `Server error! Status: ${response.status}`);
+                    }
+
+                    if (!data.plans || data.plans.length === 0) {
+                        // Handle cases where AI returns no plans
+                        throw new Error("The AI couldn't generate plans for that request. Please try being more specific.");
+                    }
+
+                    // --- SUCCESS ---
+                    // 1. Store the successful JSON response in sessionStorage
+                    sessionStorage.setItem('tripPlans', JSON.stringify(data.plans));
+                    
+                    // 2. Redirect to the itinerary page
+                    window.location.href = 'itinerary.html';
+
+                } catch (error) {
+                    console.error("Frontend Error:", error);
+                    displayError(error.message);
+                    // --- UI State: Reset on error ---
+                    submitBtn.disabled = false;
+                    btnText.classList.remove('hidden');
+                    loader.classList.add('hidden');
+                }
+            });
+
+            function displayError(message) {
+                errorMessage.textContent = `An error occurred: ${message}`;
+                errorMessage.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

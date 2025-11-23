@@ -1,0 +1,20 @@
+        How to unzip and run (quick steps):
+
+1) Unzip the archive (on your machine):
+   - Windows: Right-click → Extract All
+   - macOS/Linux: unzip mcp_gemini_project.zip -d mcp_gemini_project
+
+2) Change directory and create virtual environment:
+   cd mcp_gemini_project
+   python -m venv venv
+   source venv/bin/activate   # or venv\Scripts\activate on Windows
+
+3) Install dependencies:
+   pip install -r requirements.txt
+
+4) Create .env file from .env.sample and set GEMINI_API_KEY and GEMINI_API_URL.
+
+5) Run the server:
+   uvicorn app.main:app --reload --port 8000
+
+6) Use the test curl or Postman to call /api/query endpoint.
